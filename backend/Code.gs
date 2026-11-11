@@ -185,7 +185,24 @@ function dashboard_(user) {
   return {date:today,totalEmployees:employees.length,uniquePresent:new Set(punches.map(p=>String(p.code))).size,punches};
 }
 function listUsers_(user) { return rows_('users').map(u=>({username:u.username,name:u.name,role:u.role,active:u.active})); }
-function changePassword_(user,currentPassword,newPassword,token) {\n  if (String(newPassword||'').length < 12) throw new Error('PASSWORD_TOO_SHORT');\n  const sh=sheet_('users'), values=sh.getDataRange().getValues(), headers=values[0];\n  const ucol=headers.indexOf('username'), scol=headers.indexOf('salt'), hcol=headers.indexOf('passwordHash');\n  for(let i=1;i<values.length;i++){\n    if(String(values[i][ucol])===String(user.username)){\n      const oldSalt=String(values[i][scol]), oldHash=String(values[i][hcol]);\n      if(hash_(String(currentPassword||''),oldSalt)!==oldHash) throw new Error('CURRENT_PASSWORD_INCORRECT');\n      const salt=Utilities.getUuid();\n      sh.getRange(i+1,scol+1).setValue(salt); sh.getRange(i+1,hcol+1).setValue(hash_(newPassword,salt));\n      CacheService.getScriptCache().remove('session_'+String(token));\n      audit_(user.username,'changePassword','user',user.username,{});\n      return {changed:true,reauthenticate:true};\n    }\n  }\n  throw new Error('USER_NOT_FOUND');\n}\nfunction createUser_(user,a) {
+function changePassword_(user,currentPassword,newPassword,token) {
+  if (String(newPassword||'').length < 12) throw new Error('PASSWORD_TOO_SHORT');
+  const sh=sheet_('users'), values=sh.getDataRange().getValues(), headers=values[0];
+  const ucol=headers.indexOf('username'), scol=headers.indexOf('salt'), hcol=headers.indexOf('passwordHash');
+  for(let i=1;i<values.length;i++){
+    if(String(values[i][ucol])===String(user.username)){
+      const oldSalt=String(values[i][scol]), oldHash=String(values[i][hcol]);
+      if(hash_(String(currentPassword||''),oldSalt)!==oldHash) throw new Error('CURRENT_PASSWORD_INCORRECT');
+      const salt=Utilities.getUuid();
+      sh.getRange(i+1,scol+1).setValue(salt); sh.getRange(i+1,hcol+1).setValue(hash_(newPassword,salt));
+      CacheService.getScriptCache().remove('session_'+String(token));
+      audit_(user.username,'changePassword','user',user.username,{});
+      return {changed:true,reauthenticate:true};
+    }
+  }
+  throw new Error('USER_NOT_FOUND');
+}
+function createUser_(user,a) {
   const username=String(a.username||'').trim(), name=String(a.name||'').trim(), password=String(a.password||''), role=String(a.role||'viewer');
   if(!username||!name||password.length<12||!APP.ROLES.includes(role)) throw new Error('INVALID_USER_INPUT');
   if(rows_('users').some(u=>String(u.username)===username)) throw new Error('USERNAME_EXISTS');
