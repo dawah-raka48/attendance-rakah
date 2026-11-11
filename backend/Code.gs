@@ -186,7 +186,7 @@ function dashboard_(user) {
 }
 function listUsers_(user) { return rows_('users').map(u=>({username:u.username,name:u.name,role:u.role,active:u.active})); }
 function changePassword_(user,currentPassword,newPassword,token) {
-  if (String(newPassword||'').length < 12) throw new Error('PASSWORD_TOO_SHORT');
+  if (!/^[A-Za-z0-9\u0600-\u06FF\u0660-\u0669]{4,12}$/.test(String(newPassword||''))) throw new Error('PASSWORD_MUST_BE_4_TO_12_LETTERS_OR_NUMBERS');
   const sh=sheet_('users'), values=sh.getDataRange().getValues(), headers=values[0];
   const ucol=headers.indexOf('username'), scol=headers.indexOf('salt'), hcol=headers.indexOf('passwordHash');
   for(let i=1;i<values.length;i++){
@@ -204,7 +204,7 @@ function changePassword_(user,currentPassword,newPassword,token) {
 }
 function createUser_(user,a) {
   const username=String(a.username||'').trim(), name=String(a.name||'').trim(), password=String(a.password||''), role=String(a.role||'viewer');
-  if(!username||!name||password.length<12||!APP.ROLES.includes(role)) throw new Error('INVALID_USER_INPUT');
+  if(!username||!name||!/^[A-Za-z0-9\u0600-\u06FF\u0660-\u0669]{4,12}$/.test(password)||!APP.ROLES.includes(role)) throw new Error('INVALID_USER_INPUT');
   if(rows_('users').some(u=>String(u.username)===username)) throw new Error('USERNAME_EXISTS');
   const salt=Utilities.getUuid();
   appendObject_('users',{username,name,role,salt,passwordHash:hash_(password,salt),active:true,createdAt:new Date()});
