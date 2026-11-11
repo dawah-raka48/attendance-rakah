@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101b33"><title>نظام الحضور والانصراف | جمعية الراكة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="brand-mark">ر</div><div><strong>جمعية الراكة</strong><small>نظام الحضور والانصراف</small></div></div>
+  <div class="nav-caption">القائمة الرئيسية</div>
+  <button class="nav-link active" data-view="dashboard"><span>▦</span> لوحة التحكم</button>
+  <button class="nav-link" data-view="employees"><span>♙</span> الموظفون</button>
+  <button class="nav-link" data-view="attendance"><span>◷</span> سجل الحضور</button>
+  <button class="nav-link" data-view="reports"><span>▤</span> التقارير</button>
+  <div class="nav-caption">النظام</div>
+  <button class="nav-link" data-view="settings"><span>⚙</span> الإعدادات</button>
+  <div class="sidebar-foot"><span class="status-dot"></span> نسخة أولية – وضع تجريبي</div>
+</aside>
+<main class="main">
+<header class="topbar"><button class="menu-btn" id="menuBtn" aria-label="القائمة">☰</button><div><div class="eyebrow">جمعية الدعوة والإرشاد وتوعية الجاليات بالراكة</div><h1 id="pageTitle">لوحة التحكم</h1></div><div class="top-actions"><div class="today" id="todayLabel"></div><button class="icon-btn" id="themeBtn" title="تغيير المظهر">☼</button></div></header>
+<div class="demo-alert">هذه نسخة تجريبية ببيانات محلية على هذا المتصفح. لا تدخل بيانات موظفين حقيقية قبل إعداد قاعدة بيانات آمنة وتسجيل الدخول.</div>
+<section class="view active" id="view-dashboard">
+  <div class="welcome-row"><div><h2>مرحبًا بك 👋</h2><p>إليك ملخص متابعة الحضور والانصراف لهذا اليوم.</p></div><div class="live-clock" id="clock">--:--:--</div></div>
+  <div class="stats-grid">
+    <article class="stat-card"><div class="stat-icon blue">♙</div><span>إجمالي الموظفين</span><strong id="totalEmployees">0</strong><small>المسجلون في النظام</small></article>
+    <article class="stat-card"><div class="stat-icon green">✓</div><span>حضور اليوم</span><strong id="presentCount">0</strong><small>موظفون لديهم بصمة اليوم</small></article>
+    <article class="stat-card"><div class="stat-icon amber">◷</div><span>حالات التأخير</span><strong id="lateCount">0</strong><small>وفق مواعيد الدوام المحددة</small></article>
+    <article class="stat-card"><div class="stat-icon red">!</div><span>غياب مؤكد</span><strong id="absentCount">0</strong><small>بعد انتهاء الشفت</small></article>
+  </div>
+  <div class="content-grid"><article class="panel"><div class="panel-head"><div><h3>حالة الشفتات اليوم</h3><p>ملخص الحضور حسب فترة العمل</p></div><span class="tag">اليوم</span></div><div class="shift-list"><div class="shift-row"><div class="shift-symbol">☀</div><div class="shift-info"><b>الشفت الصباحي</b><small>09:00 ص – 11:30 ص</small></div><div class="shift-count" id="morningCount">0 <small>حضور</small></div></div><div class="shift-row"><div class="shift-symbol evening">☾</div><div class="shift-info"><b>الشفت المسائي</b><small>04:00 م – 09:00 م</small></div><div class="shift-count" id="eveningCount">0 <small>حضور</small></div></div></div></article>
+  <article class="panel"><div class="panel-head"><div><h3>ملخص الالتزام</h3><p>نسبة الحضور من إجمالي الموظفين</p></div></div><div class="donut-wrap"><div class="donut" id="attendanceDonut"><div><strong id="attendanceRate">0%</strong><small>نسبة الحضور</small></div></div></div><div class="legend"><span><i class="legend-dot green-bg"></i> حضر</span><span><i class="legend-dot gray-bg"></i> لم يسجل</span></div></article></div>
+  <article class="panel table-panel"><div class="panel-head"><div><h3>آخر حركات الحضور</h3><p>أحدث السجلات المسجلة في النظام التجريبي</p></div><button class="text-btn" data-go="attendance">عرض السجل ←</button></div><div class="table-wrap"><table><thead><tr><th>الموظف</th><th>الرقم الوظيفي</th><th>الشفت</th><th>وقت البصمة</th><th>الحالة</th></tr></thead><tbody id="recentRows"></tbody></table></div></article>
+</section>
+<section class="view" id="view-employees">
+ <div class="section-toolbar"><div><h2>إدارة الموظفين</h2><p>إضافة بيانات الموظفين وربط الرقم الوظيفي بمعرف البصمة لاحقًا.</p></div><button class="primary-btn" id="addEmployeeBtn">＋ إضافة موظف</button></div>
+ <article class="panel"><div class="filters"><input id="employeeSearch" placeholder="ابحث بالاسم أو الرقم الوظيفي"><select id="departmentFilter"><option value="">كل الأقسام</option></select></div><div class="table-wrap"><table><thead><tr><th>الرقم الوظيفي</th><th>اسم الموظف</th><th>القسم</th><th>معرف البصمة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="employeeRows"></tbody></table></div></article>
+</section>
+<section class="view" id="view-attendance">
+ <div class="section-toolbar"><div><h2>سجل الحضور والانصراف</h2><p>استعراض البصمات حسب التاريخ والشفت.</p></div><button class="primary-btn" id="addPunchBtn">＋ إضافة سجل تجريبي</button></div>
+ <article class="panel"><div class="filters"><input type="date" id="attendanceDate"><select id="shiftFilter"><option value="">كل الشفتات</option><option value="morning">صباحي</option><option value="evening">مسائي</option></select><input id="attendanceSearch" placeholder="ابحث عن موظف"></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الموظف</th><th>الشفت</th><th>وقت البصمة</th><th>الحالة</th><th>مصدر السجل</th></tr></thead><tbody id="attendanceRows"></tbody></table></div></article>
+</section>
+<section class="view" id="view-reports">
+ <div class="section-toolbar"><div><h2>التقارير</h2><p>حدد الفترة والقسم والشفت لمراجعة السجلات.</p></div><button class="primary-btn" id="exportBtn">↓ تصدير CSV</button></div>
+ <article class="panel"><div class="filters"><label>من تاريخ<input type="date" id="fromDate"></label><label>إلى تاريخ<input type="date" id="toDate"></label><select id="reportShift"><option value="">كل الشفتات</option><option value="morning">صباحي</option><option value="evening">مسائي</option></select><select id="reportDepartment"><option value="">كل الأقسام</option></select><button class="secondary-btn" id="runReport">تطبيق الفلتر</button></div><div class="report-summary" id="reportSummary"></div><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الموظف</th><th>القسم</th><th>الشفت</th><th>وقت البصمة</th><th>الحالة</th></tr></thead><tbody id="reportRows"></tbody></table></div></article>
+</section>
+<section class="view" id="view-settings">
+ <div class="section-toolbar"><div><h2>إعدادات الدوام</h2><p>المواعيد المعتمدة مبدئيًا للجمعية.</p></div><button class="primary-btn" id="saveSettings">حفظ الإعدادات</button></div>
+ <article class="panel settings-panel"><h3>الشفت الصباحي</h3><div class="settings-grid"><label>بداية الدوام<input type="time" id="morningStart" value="09:00"></label><label>نهاية الدوام<input type="time" id="morningEnd" value="11:30"></label><label>سماحية التأخير (دقيقة)<input type="number" min="0" max="120" id="morningGrace" value="0"></label></div><hr><h3>الشفت المسائي</h3><div class="settings-grid"><label>بداية الدوام<input type="time" id="eveningStart" value="16:00"></label><label>نهاية الدوام<input type="time" id="eveningEnd" value="21:00"></label><label>سماحية التأخير (دقيقة)<input type="number" min="0" max="120" id="eveningGrace" value="0"></label></div><hr><h3>أيام العمل</h3><p class="muted">تحديد أيام العمل والعطلات الرسمية سيضاف في مرحلة إعداد التقويم.</p><div class="connection-note"><b>ربط جهاز ZKTeco</b><p>غير مفعّل حاليًا. سنضيف موصل الجهاز بعد معرفة الموديل وطريقة الاتصال، دون تغيير واجهات النظام.</p><span class="tag warning-tag">بانتظار إعداد الجهاز</span></div></article>
+</section>
+</main>
+</div>
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal"><div class="modal-head"><h3 id="modalTitle">إضافة موظف</h3><button class="icon-btn" id="closeModal">×</button></div><form id="employeeForm"><label>الرقم الوظيفي<input name="code" required placeholder="EMP001"></label><label>اسم الموظف<input name="name" required placeholder="اسم الموظف"></label><label>القسم<input name="department" required placeholder="الإدارة"></label><label>معرف البصمة (اختياري)<input name="deviceId" placeholder="يُضاف عند الربط بالجهاز"></label><div class="modal-actions"><button type="button" class="secondary-btn" id="cancelModal">إلغاء</button><button class="primary-btn" type="submit">حفظ الموظف</button></div></form></div></div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body></html>
