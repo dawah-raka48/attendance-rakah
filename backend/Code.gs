@@ -5,7 +5,7 @@
  */
 const APP = {
   DB_ID_KEY: 'ATTENDANCE_DB_ID',
-  TOKEN_TTL_SECONDS: 21600,
+  TOKEN_TTL_SECONDS: 604800,
   SHEETS: {
     employees: ['code','name','department','deviceId','active','createdAt','updatedAt'],
     attendance: ['id','date','code','shift','time','type','source','createdAt','createdBy'],
@@ -129,14 +129,28 @@ function login_(p) {
   const account=rows_('users').find(u => String(u.username)===username && u.active===true);
   if (!account || hash_(password,String(account.salt)) !== String(account.passwordHash)) throw new Error('INVALID_CREDENTIALS');
   const token=Utilities.getUuid()+Utilities.getUuid();
-  CacheService.getScriptCache().put('session_'+token, JSON.stringify({username:account.username,name:account.name,role:account.role}), APP.TOKEN_TTL_SECONDS);
+  const session = {username:account.username,name:account.name,role:account.role,expiresAt:Date.now()+APP.TOKEN_TTL_SECONDS*1000};
+  PropertiesService.getScriptProperties().setProperty(sessionKey_(token), JSON.stringify(session));
+  CacheService.getScriptCache().put('session_'+token, JSON.stringify(session), Math.min(APP.TOKEN_TTL_SECONDS, 21600));
   return { token, user: {username:account.username,name:account.name,role:account.role}, expiresIn:APP.TOKEN_TTL_SECONDS };
+}
+function sessionKey_(token) {
+  const digest=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(token));
+  return 'ATTENDANCE_SESSION_'+Utilities.base64EncodeWebSafe(digest).replace(/=+$/,'');
 }
 function authorize_(token) {
   if (!token) throw new Error('UNAUTHORIZED');
-  const raw=CacheService.getScriptCache().get('session_'+String(token));
+  const key=sessionKey_(token), props=PropertiesService.getScriptProperties();
+  let raw=props.getProperty(key);
+  if (!raw) raw=CacheService.getScriptCache().get('session_'+String(token));
   if (!raw) throw new Error('SESSION_EXPIRED');
-  return JSON.parse(raw);
+  const session=JSON.parse(raw);
+  if (session.expiresAt && Date.now()>Number(session.expiresAt)) {
+    props.deleteProperty(key);
+    CacheService.getScriptCache().remove('session_'+String(token));
+    throw new Error('SESSION_EXPIRED');
+  }
+  return session;
 }
 function requireRole_(user, roles) { if (!roles.includes(user.role)) throw new Error('FORBIDDEN'); }
 function listEmployees_(user) {
@@ -196,6 +210,7 @@ function changePassword_(user,currentPassword,newPassword,token) {
       const salt=Utilities.getUuid();
       sh.getRange(i+1,scol+1).setValue(salt); sh.getRange(i+1,hcol+1).setValue(hash_(newPassword,salt));
       CacheService.getScriptCache().remove('session_'+String(token));
+      PropertiesService.getScriptProperties().deleteProperty(sessionKey_(token));
       audit_(user.username,'changePassword','user',user.username,{});
       return {changed:true,reauthenticate:true};
     }
