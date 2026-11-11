@@ -1,6 +1,6 @@
-const KEY='attendance-rakah-demo-v1';
+const KEY='attendance-rakah-v2';
 const today=()=>new Date().toISOString().slice(0,10);
-const seed={employees:[{code:'EMP001',name:'أحمد محمد',department:'الإدارة',deviceId:'',active:true},{code:'EMP002',name:'محمد علي',department:'الدعوة',deviceId:'',active:true},{code:'EMP003',name:'خالد عبدالله',department:'الإعلام',deviceId:'',active:true},{code:'EMP004',name:'سارة أحمد',department:'المالية',deviceId:'',active:true},{code:'EMP005',name:'عبدالله حسن',department:'المتابعة',deviceId:'',active:true}],punches:[{id:1,date:today(),code:'EMP001',shift:'morning',time:'08:54',source:'تجريبي'},{id:2,date:today(),code:'EMP002',shift:'morning',time:'09:12',source:'تجريبي'},{id:3,date:today(),code:'EMP003',shift:'evening',time:'15:55',source:'تجريبي'}],settings:{morningStart:'09:00',morningEnd:'11:30',morningGrace:0,eveningStart:'16:00',eveningEnd:'21:00',eveningGrace:0}};
+const seed={employees:[],punches:[],settings:{morningStart:'09:00',morningEnd:'11:30',morningGrace:0,eveningStart:'16:00',eveningEnd:'21:00',eveningGrace:0}};
 let data;try{data=JSON.parse(localStorage.getItem(KEY))||structuredClone(seed)}catch{data=structuredClone(seed)}
 const save=()=>localStorage.setItem(KEY,JSON.stringify(data));
 const $=id=>document.getElementById(id);
