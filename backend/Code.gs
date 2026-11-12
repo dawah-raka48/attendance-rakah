@@ -257,9 +257,12 @@ function syncDeviceData_(p) {
       employeesAdded++;
     });
 
+    const logSheet = sheet_('deviceLogs');
+    const headers = APP.SHEETS.deviceLogs;
     const logRows = rows_('deviceLogs');
     const known = new Set(logRows.map(r => String(r.eventId)));
-    let inserted = 0, duplicates = 0;
+    const additions = [];
+    let duplicates = 0;
     records.forEach(r => {
       const code = String(r.userId || '').trim();
       const timestamp = String(r.timestamp || '').trim();
@@ -268,16 +271,16 @@ function syncDeviceData_(p) {
       const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
       const eventId = digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2,'0')).join('');
       if (known.has(eventId)) { duplicates++; return; }
-      appendObject_('deviceLogs', {
-        eventId, deviceUserId: code, deviceUid: String(r.deviceUid ?? ''),
-        deviceName: String(r.deviceName || ''), timestamp,
-        status: String(r.status ?? ''), punch: String(r.punch ?? ''),
-        createdAt: new Date()
-      });
+      const item = {eventId, deviceUserId:code, deviceUid:String(r.deviceUid ?? ''),
+        deviceName:String(r.deviceName || ''), timestamp, status:String(r.status ?? ''),
+        punch:String(r.punch ?? ''), createdAt:new Date()};
+      additions.push(headers.map(h => item[h] === undefined ? '' : item[h]));
       known.add(eventId);
-      inserted++;
     });
-    return { employeesAdded, recordsInserted: inserted, duplicates, received: records.length };
+    if (additions.length) {
+      logSheet.getRange(logSheet.getLastRow()+1,1,additions.length,headers.length).setValues(additions);
+    }
+    return { employeesAdded, recordsInserted: additions.length, duplicates, received: records.length };
   } finally {
     lock.releaseLock();
   }
