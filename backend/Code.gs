@@ -243,13 +243,12 @@ function syncDeviceData_(p) {
     const users = Array.isArray(p.users) ? p.users : [];
     const records = Array.isArray(p.records) ? p.records : [];
     if (records.length > 300) throw new Error('BATCH_TOO_LARGE');
-    const employeeSheet = sheet_('employees');
     const existingEmployees = rows_('employees');
     const employeeCodes = new Set(existingEmployees.map(e => String(e.code)));
     let employeesAdded = 0;
     users.forEach(u => {
       const code = String(u.userId || '').trim();
-      if (!code || !/^\\d{1,20}$/.test(code) || employeeCodes.has(code)) return;
+      if (!code || !/^\d{1,20}$/.test(code) || employeeCodes.has(code)) return;
       appendObject_('employees', {
         code, name: 'موظف ' + code, department: 'غير محدد',
         deviceId: code, active: true, createdAt: new Date(), updatedAt: new Date()
@@ -264,7 +263,7 @@ function syncDeviceData_(p) {
     records.forEach(r => {
       const code = String(r.userId || '').trim();
       const timestamp = String(r.timestamp || '').trim();
-      if (!code || !/^\\d{1,20}$/.test(code) || !/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/.test(timestamp)) return;
+      if (!code || !/^\d{1,20}$/.test(code) || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timestamp)) return;
       const raw = [code, timestamp, String(r.status ?? ''), String(r.punch ?? ''), String(r.deviceUid ?? '')].join('|');
       const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
       const eventId = digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2,'0')).join('');
