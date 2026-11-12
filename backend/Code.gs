@@ -11,7 +11,8 @@ const APP = {
     attendance: ['id','date','code','shift','time','type','source','createdAt','createdBy'],
     users: ['username','name','role','salt','passwordHash','active','createdAt'],
     settings: ['key','value'],
-    audit: ['id','actor','action','entity','entityId','details','createdAt']
+    audit: ['id','actor','action','entity','entityId','details','createdAt'],
+    deviceLogs: ['eventId','deviceUserId','deviceUid','deviceName','timestamp','status','punch','createdAt']
   },
   ROLES: ['admin','hr','viewer']
 };
@@ -26,6 +27,7 @@ function doPost(e) {
     const action = String(payload.action || '');
     if (action === 'login') return json_(login_(payload));
     if (action === 'bootstrapStatus') return json_(bootstrapStatus_());
+    if (action === 'syncDeviceData') return json_({ ok: true, data: syncDeviceData_(payload) });
     if (action === 'changePassword') { const user = authorize_(payload.token); return json_(changePassword_(user, payload.currentPassword, payload.newPassword, payload.token)); }
     const user = authorize_(payload.token);
     let result;
@@ -226,6 +228,62 @@ function createUser_(user,a) {
   audit_(user.username,'createUser','user',username,{role});
   return {username,role};
 }
+
+/**
+ * Device-agent endpoint. Configure DEVICE_SYNC_KEY in Apps Script
+ * Project Settings > Script Properties. Stores raw events only;
+ * it does not infer in/out or shift from undocumented device status codes.
+ */
+function syncDeviceData_(p) {
+  const expected = PropertiesService.getScriptProperties().getProperty('DEVICE_SYNC_KEY');
+  if (!expected || String(p.deviceKey || '') !== expected) throw new Error('DEVICE_SYNC_UNAUTHORIZED');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) throw new Error('SYNC_BUSY');
+  try {
+    const users = Array.isArray(p.users) ? p.users : [];
+    const records = Array.isArray(p.records) ? p.records : [];
+    if (records.length > 300) throw new Error('BATCH_TOO_LARGE');
+    const employeeSheet = sheet_('employees');
+    const existingEmployees = rows_('employees');
+    const employeeCodes = new Set(existingEmployees.map(e => String(e.code)));
+    let employeesAdded = 0;
+    users.forEach(u => {
+      const code = String(u.userId || '').trim();
+      if (!code || !/^\\d{1,20}$/.test(code) || employeeCodes.has(code)) return;
+      appendObject_('employees', {
+        code, name: 'موظف ' + code, department: 'غير محدد',
+        deviceId: code, active: true, createdAt: new Date(), updatedAt: new Date()
+      });
+      employeeCodes.add(code);
+      employeesAdded++;
+    });
+
+    const logRows = rows_('deviceLogs');
+    const known = new Set(logRows.map(r => String(r.eventId)));
+    let inserted = 0, duplicates = 0;
+    records.forEach(r => {
+      const code = String(r.userId || '').trim();
+      const timestamp = String(r.timestamp || '').trim();
+      if (!code || !/^\\d{1,20}$/.test(code) || !/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/.test(timestamp)) return;
+      const raw = [code, timestamp, String(r.status ?? ''), String(r.punch ?? ''), String(r.deviceUid ?? '')].join('|');
+      const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
+      const eventId = digest.map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2,'0')).join('');
+      if (known.has(eventId)) { duplicates++; return; }
+      appendObject_('deviceLogs', {
+        eventId, deviceUserId: code, deviceUid: String(r.deviceUid ?? ''),
+        deviceName: String(r.deviceName || ''), timestamp,
+        status: String(r.status ?? ''), punch: String(r.punch ?? ''),
+        createdAt: new Date()
+      });
+      known.add(eventId);
+      inserted++;
+    });
+    return { employeesAdded, recordsInserted: inserted, duplicates, received: records.length };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function audit_(actor,action,entity,entityId,details) {
   appendObject_('audit',{id:Utilities.getUuid(),actor,action,entity,entityId,details:JSON.stringify(details),createdAt:new Date()});
 }
